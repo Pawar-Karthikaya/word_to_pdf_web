@@ -1,33 +1,43 @@
 let currentTaskId = null;
 let currentFileName = '';
 
-// Drag and drop functionality
-const uploadArea = document.getElementById('uploadArea');
-const fileInput = document.getElementById('fileInput');
-
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, preventDefaults, false);
+// Initialize when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDragAndDrop();
 });
 
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
+function initializeDragAndDrop() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
 
-['dragenter', 'dragover'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
-});
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
 
-['dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
-});
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
-uploadArea.addEventListener('drop', handleDrop, false);
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.add('dragover', 'border-primary');
+        }, false);
+    });
 
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFileSelect(files);
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.remove('dragover', 'border-primary');
+        }, false);
+    });
+
+    uploadArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFileSelect(files);
+    }
 }
 
 function handleFileSelect(files) {
@@ -36,7 +46,10 @@ function handleFileSelect(files) {
         if (file.name.match(/\.(doc|docx)$/)) {
             currentFileName = file.name;
             document.getElementById('fileName').textContent = file.name;
-            document.getElementById('selectedFile').style.display = 'block';
+            
+            const selectedFile = document.getElementById('selectedFile');
+            selectedFile.classList.remove('d-none');
+            
             document.getElementById('convertBtn').disabled = false;
             hideMessages();
         } else {
@@ -55,8 +68,11 @@ async function convertFile() {
 
     // Reset UI
     document.getElementById('convertBtn').disabled = true;
-    document.getElementById('progressContainer').style.display = 'block';
-    document.getElementById('downloadBtn').style.display = 'none';
+    
+    const progressContainer = document.getElementById('progressContainer');
+    progressContainer.classList.remove('d-none');
+    
+    document.getElementById('downloadBtn').classList.add('d-none');
     hideMessages();
     updateProgress(0, 'Starting conversion...');
 
@@ -91,7 +107,9 @@ async function pollTaskStatus() {
         } else if (task.status === 'completed') {
             updateProgress(100, 'Conversion completed!');
             showSuccess('File converted successfully!');
-            document.getElementById('downloadBtn').style.display = 'block';
+            
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.classList.remove('d-none');
         } else if (task.status === 'failed') {
             throw new Error(task.message || 'Conversion failed');
         } else {
@@ -140,33 +158,36 @@ async function downloadFile() {
 }
 
 function updateProgress(percent, message) {
-    document.getElementById('progressFill').style.width = percent + '%';
+    const progressFill = document.getElementById('progressFill');
+    progressFill.style.width = percent + '%';
+    progressFill.textContent = percent + '%';
+    
     document.getElementById('progressText').textContent = message;
 }
 
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    document.getElementById('successMessage').style.display = 'none';
+    errorDiv.classList.remove('d-none');
+    document.getElementById('successMessage').classList.add('d-none');
 }
 
 function showSuccess(message) {
     const successDiv = document.getElementById('successMessage');
     successDiv.textContent = message;
-    successDiv.style.display = 'block';
-    document.getElementById('errorMessage').style.display = 'none';
+    successDiv.classList.remove('d-none');
+    document.getElementById('errorMessage').classList.add('d-none');
 }
 
 function hideMessages() {
-    document.getElementById('errorMessage').style.display = 'none';
-    document.getElementById('successMessage').style.display = 'none';
+    document.getElementById('errorMessage').classList.add('d-none');
+    document.getElementById('successMessage').classList.add('d-none');
 }
 
 function resetUI() {
     document.getElementById('convertBtn').disabled = false;
-    document.getElementById('progressContainer').style.display = 'none';
-    document.getElementById('downloadBtn').style.display = 'none';
+    document.getElementById('progressContainer').classList.add('d-none');
+    document.getElementById('downloadBtn').classList.add('d-none');
     updateProgress(0, '0%');
 }
 
